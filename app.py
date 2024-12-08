@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Firebase Initialization
-cred = credentials.Certificate('models/capstone-92833-firebase-adminsdk-s3jx2-ecca31e283.json')  # Path to your Firebase service account key
+cred = credentials.Certificate('models/capstone-92833-firebase-adminsdk-s3jx2-6e7c4801f4.json')  # Path to your Firebase service account key
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://capstone-92833-default-rtdb.asia-southeast1.firebasedatabase.app'
 })
