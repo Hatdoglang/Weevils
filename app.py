@@ -207,4 +207,4 @@ def predict():
         return render_template('prediction.html', prediction=None, confidence=None, image_path=None, note="An error occurred during prediction. Please try again.")
 
 if __name__ == '__main__':
-    app.run(port=3000, debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)), debug=True)
