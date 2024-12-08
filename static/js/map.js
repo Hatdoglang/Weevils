@@ -64,36 +64,32 @@ async function loadMarkers() {
         // Load genus markers
         const genusSnapshot = await get(ref(db, 'species/genera'));
         if (genusSnapshot.exists()) {
-            for (const genusKey in genusSnapshot.val()) {
-                const genus = genusSnapshot.val()[genusKey];
-                console.log("Genus data:", genus);  // Debugging log
+            const genera = genusSnapshot.val();
+            for (const genusKey in genera) {
+                const genus = genera[genusKey];
+                console.log("Genus data:", genus); // Debugging log
 
-                // Iterate over each species in the genus
                 for (const speciesKey in genus) {
                     const speciesData = genus[speciesKey];
                     console.log("Species Data:", speciesData); // Debugging log
 
-                    const location = speciesData?.location;  // Access the location for each species
-                    const speciesName = speciesData?.speciesName || speciesKey; // Use speciesKey if speciesName is not available
-                    const genusLabel = speciesData?.genusName || genusKey; // Use genusKey if genusName is not available
-                    const imageUrl = speciesData?.imageUrl; // Image URL if available
+                    const location = speciesData?.location;
+                    const speciesName = speciesData?.speciesName || speciesKey;
+                    const genusLabel = speciesData?.genusName || genusKey;
+                    const imageUrl = speciesData?.imageUrl;
 
-                    // Build scientific name: genusKey + speciesKey
-                    const scientificName = `${genusKey} ${speciesKey}`;
+                    const scientificName = `${genusLabel} ${speciesName}`;
 
                     if (location) {
                         const coordinates = await getCoordinatesFromLocation(location);
                         if (coordinates) {
-                            console.log(`Coordinates for ${speciesName}:`, coordinates); // Log coordinates
-                            // Format popup text with styling (display only scientific name and location)
+                            console.log(`Coordinates for ${speciesName}:`, coordinates);
                             const popupText = `
-                                <div style="font-size: 14px; color: #333;">
-                                    <strong style="font-size: 16px; color: #0056b3;">Scientific Name:</strong> 
-                                    <span style="font-style: italic;">${scientificName}</span><br>
+                            <div style="font-size: 14px; color: #333; width: 220px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; border-radius: 5px; text-align: center;">
                                     <strong style="color: #006400;">Location:</strong> ${location}
-                                </div>
-                            `;
-                            const marker = createMarker(coordinates.lat, coordinates.lon, popupText, imageUrl);
+                            </div>
+                        `;
+                            const marker = createMarker(coordinates.lat, coordinates.lon, popupText, imageUrl, scientificName);
                             markers.push({ name: speciesName, marker });
                         } else {
                             console.error(`Could not find coordinates for location: ${location}`);
@@ -108,37 +104,33 @@ async function loadMarkers() {
         // Load subgenus markers
         const subgenusSnapshot = await get(ref(db, 'species/subgenera'));
         if (subgenusSnapshot.exists()) {
-            for (const subgenusKey in subgenusSnapshot.val()) {
-                const subgenus = subgenusSnapshot.val()[subgenusKey];
-                console.log("Subgenus data:", subgenus);  // Debugging log
+            const subgenera = subgenusSnapshot.val();
+            for (const subgenusKey in subgenera) {
+                const subgenus = subgenera[subgenusKey];
+                console.log("Subgenus data:", subgenus); // Debugging log
 
-                // Iterate over each species in the subgenus
                 for (const speciesKey in subgenus) {
                     const speciesData = subgenus[speciesKey];
                     console.log("Species Data:", speciesData); // Debugging log
 
-                    const location = speciesData?.location;  // Access the location for each species
-                    const speciesName = speciesData?.speciesName || speciesKey; // Use speciesKey if speciesName is not available
-                    const subgenusLabel = speciesData?.subgenusName || subgenusKey; // Use subgenusKey if subgenusName is not available
-                    const genusLabel = speciesData?.genusName || "Unknown Genus"; // Genus name
-                    const imageUrl = speciesData?.imageUrl; // Image URL if available
+                    const location = speciesData?.location;
+                    const speciesName = speciesData?.speciesName || speciesKey;
+                    const subgenusLabel = speciesData?.subgenusName || subgenusKey;
+                    const genusLabel = speciesData?.genusName || "Unknown Genus";
+                    const imageUrl = speciesData?.imageUrl;
 
-                    // Build scientific name: genusName + subgenusKey + speciesName
-                    const scientificName = `${genusLabel} ${subgenusKey} ${speciesName}`;
+                    const scientificName = `${genusLabel} ${subgenusLabel} ${speciesName}`;
 
                     if (location) {
                         const coordinates = await getCoordinatesFromLocation(location);
                         if (coordinates) {
-                            console.log(`Coordinates for ${speciesName}:`, coordinates); // Log coordinates
-                            // Format popup text with styling (display only scientific name and location)
+                            console.log(`Coordinates for ${speciesName}:`, coordinates);
                             const popupText = `
-                                <div style="font-size: 14px; color: #333;">
-                                    <strong style="font-size: 16px; color: #0056b3;">Scientific Name:</strong> 
-                                    <span style="font-style: italic;">${scientificName}</span><br>
+                                <div style="font-size: 14px; color: #333; width: 220px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; border-radius: 5px; text-align: center;">
                                     <strong style="color: #006400;">Location:</strong> ${location}
-                                </div>
+                            </div>
                             `;
-                            const marker = createMarker(coordinates.lat, coordinates.lon, popupText, imageUrl);
+                            const marker = createMarker(coordinates.lat, coordinates.lon, popupText, imageUrl, scientificName);
                             markers.push({ name: speciesName, marker });
                         } else {
                             console.error(`Could not find coordinates for location: ${location}`);
@@ -154,7 +146,6 @@ async function loadMarkers() {
     }
 }
 
-
 // Adjust map view to fit all markers
 function fitMapToMarkers() {
     if (markers.length > 0) {
@@ -167,25 +158,35 @@ function fitMapToMarkers() {
 }
 
 // Function to create a marker with an offset for overlapping markers
-function createMarker(lat, lon, popupText, imageUrl) {
-    const existingMarker = markers.find(markerData => 
+function createMarker(lat, lon, popupText, imageUrl, scientificName) {
+    const existingMarker = markers.find(markerData =>
         markerData.marker.getLngLat().lat === lat && markerData.marker.getLngLat().lng === lon
     );
 
-    // Apply offset if a marker already exists at this location
-    const offset = existingMarker ? 0.0001 : 0; // If marker exists, apply a slight offset to the position
+    const offset = existingMarker ? 0.0001 : 0;
 
     const marker = new mapboxgl.Marker()
-        .setLngLat([lon + offset, lat + offset]) // Apply offset to longitude and latitude
+        .setLngLat([lon + offset, lat + offset])
         .addTo(map);
 
-    // Add popup to marker
     const popup = new mapboxgl.Popup({ offset: 25 })
-        .setHTML(`<h3>${popupText}</h3><img src="${imageUrl}" alt="Species Image" style="width:100px; height:auto;" />`);
+        .setHTML(`
+            ${popupText}
+            <div style="text-align: center; margin-top: 10px;">
+                <img src="${imageUrl}" alt="Species Image" style="width:100%; height:auto;" />
+                <div style="margin-top: 5px; font-style: italic; font-size:18px;">${scientificName}</div>                
+            </div>
+        `);
     marker.setPopup(popup);
 
-    // Store marker data
-    markers.push({ marker: marker, lat: lat + offset, lon: lon + offset });
+    // Adjust map view to position popup at the top when opened
+    marker.getPopup().on('open', () => {
+        map.easeTo({
+            center: [lon + offset, lat + offset],
+            zoom: Math.max(map.getZoom(), 10), // Adjust zoom if necessary
+            offset: [0, -window.innerHeight / 4], // Offset popup position upwards
+        });
+    });
 
     return marker;
 }
