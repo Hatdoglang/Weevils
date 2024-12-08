@@ -1,3 +1,7 @@
+
+
+
+
 from flask import Flask, render_template, request, url_for
 import os
 import logging
@@ -14,14 +18,19 @@ app = Flask(__name__)
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# Device configuration
+# Device configuration for PyTorch (GPU or CPU)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# Firebase Initialization
-cred = credentials.Certificate('/etc/secrets/firebase-key.json')  # Updated to use the secret file path
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://capstone-92833-default-rtdb.asia-southeast1.firebasedatabase.app'
-})
+# Firebase initialization
+try:
+    cred = credentials.Certificate('/etc/secrets/firebase-key.json')  # Path to the secret file
+    firebase_admin.initialize_app(cred, {
+        'databaseURL': 'https://capstone-92833-default-rtdb.asia-southeast1.firebasedatabase.app'
+    })
+    logging.info("Firebase initialized successfully.")
+except Exception as e:
+    logging.error(f"Error initializing Firebase: {e}")
+    raise
 
 # Define the CNN model
 class CNN(nn.Module):
@@ -37,6 +46,7 @@ class CNN(nn.Module):
         self.dropout = nn.Dropout(0.5)
         self.relu = nn.ReLU()
 
+        # Calculate input size for the fully connected layer
         self._to_linear = 128 * (128 // 8) * (128 // 8)
         self.fc1 = nn.Linear(self._to_linear, 256)
         self.fc2 = nn.Linear(256, num_classes)
@@ -51,14 +61,13 @@ class CNN(nn.Module):
         x = self.fc2(x)
         return x
 
-# Model path and class names
+# Model path and class setup
 model_path = "models/cnn_model123.pth"
 class_names = ['Dolichocephalocyrtus', 'Metapocyrtus', 'Orthocyrtus', 'Pachyrhynchus', 'Trachycyrtus']
 num_classes = len(class_names)
 
+# Load the model and handle potential class size mismatches
 model = CNN(num_classes=num_classes).to(device)
-
-# Load the model and fix checkpoint issues
 checkpoint = torch.load(model_path, map_location=device)
 if checkpoint['fc2.weight'].size(0) != num_classes:
     logging.warning(f"Adjusting checkpoint to match {num_classes} classes.")
@@ -69,11 +78,11 @@ model.load_state_dict(checkpoint)
 model.eval()
 logging.info("Model loaded successfully.")
 
-# Image directory
+# Define the image directory and create if it doesn't exist
 images_dir = "./static/images"
 os.makedirs(images_dir, exist_ok=True)
 
-# Image transformation
+# Image preprocessing
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor(),
@@ -173,7 +182,6 @@ def predict():
         predicted_genus = class_names[predicted_idx]
         confidence_display = round(confidence, 2)
         note = "" if confidence >= 50 else "Low confidence in prediction."
-
         image_url = url_for('static', filename='images/' + imagefile.filename)
 
         return render_template('prediction.html', prediction=predicted_genus, confidence=confidence_display, image_path=image_url, note=note)
