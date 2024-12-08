@@ -82,6 +82,9 @@ function displayDetails(data) {
   // Set scientific name and authorship
   scientificName.innerText = `${genusName} ${speciesName}`;
   scientificAuthorship.innerText = data.scientificAuthorship || 'No authorship available';
+
+  // Set the author name below the genus name
+  authorName.innerText = `${data.scientificAuthorship || 'Unknown'}`;
   
   // Set the image
   genusImage.src = data.imageUrl || 'placeholder-image-url.jpg';
