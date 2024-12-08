@@ -79,7 +79,10 @@
   
       // Combine the names with the subgenusName wrapped in a span for styling
       const combinedName = `<span style="font-style: italic; font-weight: 400">${genusName}</span> <span style="font-style: italic; font-weight: 400">${subGenusName}</span> <span style="font-style: italic; font-weight: 400">${speciesName}</span>`;
-  
+
+        // Set the author name below the genus name
+      authorName.innerText = `${data.scientificAuthorship || 'Unknown'}`;
+        
       // Set the inner HTML of the subgenus name container
       subgenusNameContainer.innerHTML = combinedName;
   
