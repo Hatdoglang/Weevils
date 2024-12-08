@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Classifier</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="{{ url_for('static', filename='css/prediction.css') }}" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <div class="card mx-auto mt-5" style="max-width: 900px;">
+            <div class="card-header">
+                <h1 class="text-center">
+                    <i class="fas fa-bug"></i> Know your weevil <i class="fas fa-bug"></i>
+                </h1>
+            </div>
+            <div class="card-body">
+                <form class="p-3 text-center" action="{{ url_for('predict') }}" method="POST"
+                    enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="imagefile" class="form-label">Upload Image</label>
+                        <input class="form-control" type="file" id="imagefile" name="imagefile"
+                            onchange="displayImage(event)">
+                    </div>
+
+                    <div class="flex-container">
+                        <div id="imageContainer" class="text-center">
+                            {% if image_path %}
+                            <img src="{{ image_path }}" />
+                            {% endif %}
+                        </div>
+
+                        <div class="result-container">
+                            <div class="prediction-result" id="predictionResult">
+                                {% if prediction %}
+                                <p class="text-center"><b>Genus: {{ prediction }}</b></p>
+                                {% if confidence is not none %}
+                                <p class="text-center"><b>Confidence: {{ confidence }}%</b></p>
+                                {% endif %}
+                                {% else %}
+                                <p class="text-center"><b>No prediction available yet.</b></p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="button-container">
+                        <input class="btn btn-primary" type="submit" value="Scan">
+                        <button type="button" class="btn btn-info" id="imageFormatBtn">Image Format</button>
+                    </div>
+
+                </form>
+            </div>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-alt-circle-left"></i>
+            </a>
+            <!-- Guide Icon -->
+            <i class="fas fa-question-circle guide-icon" id="guideIcon" title="Guide"></i>
+        </div>
+    </div>
+
+    <!-- Image format display section -->
+    <div id="imageFormatOverlay" class="overlay" style="display: none;">
+        <div class="image-format-content">
+            <div class="row mt-4">
+                <!-- Sample images to be displayed when the button is clicked -->
+                <div class="col-md-4 mb-3">
+                    <img src="../static/img/sample1.jpg" class="img-fluid" alt="Sample Image 1">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <img src="../static/img/sample2.jpg" class="img-fluid" alt="Sample Image 2">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <img src="../static/img/sample3.jpg" class="img-fluid" alt="Sample Image 3">
+                </div>
+            </div>
+            <!-- Close button -->
+            <button class="close-btn" onclick="closeImageFormat()">X</button>
+        </div>
+    </div>
+
+
+    <!-- Guide elements -->
+    <div id="guideOverlay" class="overlay"></div>
+    <div id="guideBox" class="guide-box">
+        <p id="guideText">Step 1: Upload an image using the button below.</p>
+        <button id="guideNextBtn" class="guide-btn">Next</button>
+        <button id="guideEndBtn" class="guide-btn" style="display:none;">End Tutorial</button>
+    </div>
+
+    <!-- Custom script -->
+    <script src="{{ url_for('static', filename='js/prediction.js') }}"></script>
+
+
+</body>
+
+</html>
